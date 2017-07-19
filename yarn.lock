@@ -3075,6 +3075,10 @@ react-devtools-core@2.3.1:
     shell-quote "^1.6.1"
     ws "^2.0.3"
 
+react-native-keep-awake@^2.0.4:
+  version "2.0.4"
+  resolved "https://registry.yarnpkg.com/react-native-keep-awake/-/react-native-keep-awake-2.0.4.tgz#da58b3161f1360163445c53e8c1cf411068f9a75"
+
 react-native-sensors@^2.3.1:
   version "2.3.1"
   resolved "https://registry.yarnpkg.com/react-native-sensors/-/react-native-sensors-2.3.1.tgz#b180edcc51ceb9064fe17e9ae890b8c5fe6c90a2"

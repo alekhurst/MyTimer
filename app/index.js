@@ -5,6 +5,7 @@ import { decorator as sensors } from 'react-native-sensors';
 import HourglassBottom from './components/HourglassBottom';
 import HourglassTop from './components/HourglassTop';
 import HourglassOverlay from './components/HourglassOverlay';
+import KeepAwake from 'react-native-keep-awake';
 
 class App extends React.Component {
   static propTypes = {
@@ -12,26 +13,31 @@ class App extends React.Component {
   };
 
   state = {
-    pitchDeg: '0deg',
-    timerSet: false,
+    pitch: 0,
+    timerIsSet: false,
   };
 
   componentWillReceiveProps(nextProps) {
     if (!nextProps.Accelerometer) {
-      // Accelerometer not initialized
+      // Accelerometer not yet initialized
       return;
     }
 
     let pitch = this.calculatePitch(nextProps.Accelerometer);
-    pitch = (-pitch * 57.295779513).toFixed(1);
-    const pitchDeg = `${pitch}deg`;
+    pitch = Number((-pitch * 57.295779513).toFixed(1));
 
-    const state = { pitchDeg };
-    if (Math.abs(pitch) >= 70) {
-      state.timerSet = true;
+    const state = { pitch };
+    if (Math.abs(pitch) >= 65) {
+      state.timerIsSet = true;
     }
     this.setState(state);
   }
+
+  onPressReset = () => {
+    this.setState({
+      timerIsSet: false,
+    });
+  };
 
   calculatePitch = accelerometerData => {
     const { x, y, z } = accelerometerData;
@@ -39,13 +45,25 @@ class App extends React.Component {
   };
 
   render() {
-    const { pitchDeg, timerSet } = this.state;
+    const { pitch, timerIsSet } = this.state;
+
+    const containerTransform = {
+      transform: [
+        {
+          rotate: timerIsSet ? `${pitch + 180}deg` : '0deg',
+        },
+      ],
+    };
 
     return (
-      <View style={{ flex: 1 }}>
+      <View style={[{ flex: 1 }, containerTransform]}>
+        <KeepAwake />
         <StatusBar hidden />
-        <HourglassTop pitchDeg={pitchDeg} />
-        <HourglassBottom pitchDeg={pitchDeg} timerSet={timerSet} />
+        <HourglassTop
+          onPressReset={this.onPressReset}
+          timerIsSet={timerIsSet}
+        />
+        <HourglassBottom pitch={pitch} timerIsSet={timerIsSet} />
 
         {/* this overlay is positioned absolutely
           and doesn't receive touch events */}

@@ -20,6 +20,7 @@
     "prop-types": "^15.5.10",
     "react": "16.0.0-alpha.12",
     "react-native": "^0.46.4",
+    "react-native-keep-awake": "^2.0.4",
     "react-native-sensors": "^2.3.1",
     "react-native-triangle": "^0.0.7"
   }

@@ -11,6 +11,7 @@ const PseudoBackground = () =>
 
 const LeftSide = () =>
   <View style={styles.sideContainer}>
+    <View style={[styles.outsideTriangle, styles.leftOfLeftTriangle]} />
     <Triangle
       width={vw(50)}
       height={vh(100)}
@@ -21,6 +22,7 @@ const LeftSide = () =>
 
 const RightSide = () =>
   <View style={styles.sideContainer}>
+    <View style={[styles.outsideTriangle, styles.rightOfRightTriangle]} />
     <Triangle
       width={vw(50)}
       height={vh(100)}
@@ -44,6 +46,18 @@ const styles = StyleSheet.create({
   sideContainer: {
     flex: 1,
     alignSelf: 'stretch',
+  },
+  outsideTriangle: {
+    position: 'absolute',
+    width: vw(100),
+    height: vh(100),
+    backgroundColor: 'rgb(97,97,97)',
+  },
+  leftOfLeftTriangle: {
+    left: vw(100),
+  },
+  rightOfRightTriangle: {
+    right: vw(100),
   },
 });
 

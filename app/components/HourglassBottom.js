@@ -3,29 +3,19 @@ import PropTypes from 'prop-types';
 import { StyleSheet, View, PanResponder, Text } from 'react-native';
 import { vw, vh } from './helpers/viewPercentages';
 
-const MAX_MINUTES = 45;
+const MAX_MINUTES = 30;
 const CONTAINER_HEIGHT = vh(50) - 60;
 
 export default class HourglassBottom extends React.Component {
   static propTypes = {
-    pitchDeg: PropTypes.string.isRequired,
-    timerSet: PropTypes.bool.isRequired,
+    timerIsSet: PropTypes.bool.isRequired,
+    pitch: PropTypes.number.isRequired,
   };
 
   state = {
     waterInGlass: false,
     waterHeight: 0,
-    setPitchDeg: null,
   };
-
-  componentWillReceiveProps(nextProps) {
-    const { timerSet, pitchDeg } = this.props;
-    if (!timerSet && nextProps.timerSet) {
-      this.setState({
-        setPitchDeg: pitchDeg,
-      });
-    }
-  }
 
   panResponder = PanResponder.create({
     onStartShouldSetPanResponder: () => true,
@@ -53,24 +43,49 @@ export default class HourglassBottom extends React.Component {
     onShouldBlockNativeResponder: () => true,
   });
 
-  render() {
-    const { pitchDeg, timerSet } = this.props;
-    const { waterHeight, setPitchDeg } = this.state;
-
+  getTimeFromWaterHeight = () => {
+    const { waterHeight } = this.state;
     const portionFull = waterHeight / CONTAINER_HEIGHT;
-    const time = Math.round(MAX_MINUTES * portionFull ** 2); // eslint-disable-line
+    return Math.round(MAX_MINUTES * portionFull ** 2); // eslint-disable-line
+  };
+
+  render() {
+    const { pitch, timerIsSet } = this.props;
+    const { waterHeight } = this.state;
+
+    const containerTransform = {
+      transform: [
+        {
+          rotate: timerIsSet ? '180deg' : `${pitch}deg`,
+        },
+        {
+          translateY: timerIsSet ? 0 : Math.abs(pitch / 2),
+        },
+      ],
+    };
 
     return (
-      <View
-        style={[
-          styles.container,
-          { transform: [{ rotate: timerSet ? setPitchDeg : pitchDeg }] },
-        ]}
-      >
-        <View style={styles.innerContainer} {...this.panResponder.panHandlers}>
-          {waterHeight > 0 &&
+      <View style={[styles.container, containerTransform]}>
+        <View
+          style={styles.innerContainer}
+          {...(timerIsSet ? {} : this.panResponder.panHandlers)}
+        >
+          {!timerIsSet &&
+            waterHeight > 0 &&
+            <Text
+              style={[
+                styles.time,
+                {
+                  bottom: waterHeight,
+                  left: this.getTimeFromWaterHeight() * -pitch / MAX_MINUTES,
+                },
+              ]}
+            >
+              {this.getTimeFromWaterHeight()}
+            </Text>}
+          {timerIsSet &&
             <Text style={[styles.time, { bottom: waterHeight }]}>
-              {time}
+              {this.getTimeFromWaterHeight()}:00
             </Text>}
           <View style={[styles.water, { height: waterHeight }]} />
           {waterHeight > 0 &&
