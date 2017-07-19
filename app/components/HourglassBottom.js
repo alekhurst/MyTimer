@@ -4,7 +4,7 @@ import { StyleSheet, View, PanResponder, Text } from 'react-native';
 import { vw, vh } from './helpers/viewPercentages';
 
 const MAX_MINUTES = 45;
-const CONTAINER_HEIGHT = vh(50) - 100;
+const CONTAINER_HEIGHT = vh(50) - 60;
 
 export default class HourglassBottom extends React.Component {
   static propTypes = {
@@ -39,8 +39,8 @@ export default class HourglassBottom extends React.Component {
     onPanResponderMove: (evt, { y0, dy }) => {
       const waterHeight = vh(100) - (y0 + dy);
 
-      if (waterHeight >= vh(50)) {
-        this.setState({ waterHeight: vh(50) });
+      if (waterHeight >= CONTAINER_HEIGHT) {
+        this.setState({ waterHeight: CONTAINER_HEIGHT });
         return;
       }
 
@@ -57,7 +57,7 @@ export default class HourglassBottom extends React.Component {
     const { pitchDeg, timerSet } = this.props;
     const { waterHeight, setPitchDeg } = this.state;
 
-    const portionFull = (vh(50) - (vh(50) - waterHeight)) / vh(50);
+    const portionFull = waterHeight / CONTAINER_HEIGHT;
     const time = Math.round(MAX_MINUTES * portionFull ** 2); // eslint-disable-line
 
     return (
@@ -66,15 +66,16 @@ export default class HourglassBottom extends React.Component {
           styles.container,
           { transform: [{ rotate: timerSet ? setPitchDeg : pitchDeg }] },
         ]}
-        {...this.panResponder.panHandlers}
       >
-        {waterHeight > 0 &&
-          <Text style={[styles.time, { bottom: waterHeight }]}>
-            {time}
-          </Text>}
-        <View style={[styles.water, { height: waterHeight }]} />
-        {waterHeight > 0 &&
-          <View style={[styles.water, styles.belowWaterExtension]} />}
+        <View style={styles.innerContainer} {...this.panResponder.panHandlers}>
+          {waterHeight > 0 &&
+            <Text style={[styles.time, { bottom: waterHeight }]}>
+              {time}
+            </Text>}
+          <View style={[styles.water, { height: waterHeight }]} />
+          {waterHeight > 0 &&
+            <View style={[styles.water, styles.belowWaterExtension]} />}
+        </View>
       </View>
     );
   }
@@ -82,13 +83,17 @@ export default class HourglassBottom extends React.Component {
 
 const styles = StyleSheet.create({
   container: {
-    width: vw(100),
-    height: CONTAINER_HEIGHT,
     flex: 1,
+    alignSelf: 'stretch',
+    zIndex: 0,
+    justifyContent: 'flex-end',
+  },
+  innerContainer: {
+    height: CONTAINER_HEIGHT,
+    width: vw(100),
+    alignSelf: 'flex-end',
     alignItems: 'center',
     justifyContent: 'flex-end',
-    zIndex: 0,
-    paddingTop: 100,
   },
   time: {
     position: 'relative',

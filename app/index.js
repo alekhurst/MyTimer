@@ -1,43 +1,42 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { View, StatusBar } from 'react-native';
-import { Accelerometer } from 'expo';
+import { decorator as sensors } from 'react-native-sensors';
 import HourglassBottom from './components/HourglassBottom';
 import HourglassTop from './components/HourglassTop';
 import HourglassOverlay from './components/HourglassOverlay';
 
-export default class App extends React.Component {
+class App extends React.Component {
+  static propTypes = {
+    Accelerometer: PropTypes.object, // eslint-disable-line
+  };
+
   state = {
     pitchDeg: '0deg',
     timerSet: false,
   };
 
-  componentWillMount() {
-    this.accelerometerSubscription = Accelerometer.addListener(res => {
-      let pitch = this.calculatePitch(res);
-      pitch = (-pitch * 57.295779513).toFixed(1);
-      const pitchDeg = `${pitch}deg`;
-
-      const state = { pitchDeg };
-      if (Math.abs(pitch) >= 70) {
-        console.log(pitchDeg);
-        state.timerSet = true;
-      }
-      this.setState(state);
-    });
-  }
-
-  componentWillUnmount() {
-    if (this.accelerometerSubscription) {
-      this.accelerometerSubscription.remove();
+  componentWillReceiveProps(nextProps) {
+    if (!nextProps.Accelerometer) {
+      // Accelerometer not initialized
+      return;
     }
 
-    this.accelerometerSubscription = null;
+    let pitch = this.calculatePitch(nextProps.Accelerometer);
+    pitch = (-pitch * 57.295779513).toFixed(1);
+    const pitchDeg = `${pitch}deg`;
+
+    const state = { pitchDeg };
+    if (Math.abs(pitch) >= 70) {
+      state.timerSet = true;
+    }
+    this.setState(state);
   }
 
-  calculatePitch(accelerometerData) {
+  calculatePitch = accelerometerData => {
     const { x, y, z } = accelerometerData;
     return Math.atan(x / Math.sqrt(y ** 2 + z ** 2)); // eslint-disable-line
-  }
+  };
 
   render() {
     const { pitchDeg, timerSet } = this.state;
@@ -55,3 +54,7 @@ export default class App extends React.Component {
     );
   }
 }
+
+export default sensors({
+  Accelerometer: true,
+})(App);

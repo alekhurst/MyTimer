@@ -1,4 +1,4 @@
-## Timer App
+## MyTimer
 
 I know what you're thinking, why make another timer app? There are hundreds, if not thousands, and they're so booooring!
 
