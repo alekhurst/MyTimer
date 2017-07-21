@@ -1,21 +1,62 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { StyleSheet, View, PanResponder, Text } from 'react-native';
+import { Animated, StyleSheet, View, PanResponder, Text } from 'react-native';
 import { vw, vh } from './helpers/viewPercentages';
 
 const MAX_MINUTES = 30;
-const CONTAINER_HEIGHT = vh(50) - 60;
+const CONTAINER_HEIGHT = vh(50) - 80;
 
 export default class HourglassBottom extends React.Component {
   static propTypes = {
     timerIsSet: PropTypes.bool.isRequired,
     pitch: PropTypes.number.isRequired,
+    pitchTimerWasSetAt: PropTypes.number,
+  };
+
+  static defaultProps = {
+    pitchTimerWasSetAt: null,
   };
 
   state = {
     waterInGlass: false,
     waterHeight: 0,
+    rotationAnim: new Animated.Value(0),
+    secondsRemaining: null,
   };
+
+  componentWillReceiveProps(nextProps) {
+    const { pitch, timerIsSet, pitchTimerWasSetAt } = this.props;
+
+    if (pitchTimerWasSetAt === null && nextProps.pitchTimerWasSetAt !== null) {
+      // timer setting animation just completed
+      this.startTimer();
+    }
+
+    if (timerIsSet && nextProps.timerIsSet) {
+      // time has already been set
+      return;
+    }
+
+    if (timerIsSet === false && nextProps.timerIsSet === true) {
+      // timer was just set
+      this.setState({ secondsRemaining: this.getTimeFromWaterHeight() * 60 });
+      Animated.timing(this.state.rotationAnim, {
+        toValue: pitch < 0 ? -180 : 180,
+        duration: 800,
+      }).start();
+    } else if (timerIsSet === true && nextProps.timerIsSet === false) {
+      // timer was reset
+      console.log('timer reste');
+      this.setState({ secondsRemaining: null });
+      clearInterval(this.timerInterval);
+    } else if (timerIsSet === false) {
+      // timer not set
+      Animated.timing(this.state.rotationAnim, {
+        toValue: nextProps.pitch,
+        duration: 120,
+      }).start();
+    }
+  }
 
   getTimeFromWaterHeight = () => {
     const { waterHeight } = this.state;
@@ -49,50 +90,49 @@ export default class HourglassBottom extends React.Component {
     onShouldBlockNativeResponder: () => true,
   });
 
+  startTimer = () => {
+    this.timerInterval = setInterval(() => {
+      this.setState(state => ({
+        secondsRemaining: state.secondsRemaining - 1,
+      }));
+    }, 1000);
+  };
+
   render() {
-    const { pitch, timerIsSet } = this.props;
-    const { waterHeight } = this.state;
+    const { timerIsSet, pitchTimerWasSetAt } = this.props;
+    const { waterHeight, rotationAnim, secondsRemaining } = this.state;
 
     const containerTransform = {
       transform: [
         {
-          rotate: timerIsSet ? '180deg' : `${pitch}deg`,
-        },
-        {
-          translateY: timerIsSet ? 0 : Math.abs(pitch / 2),
+          rotate: rotationAnim.interpolate({
+            inputRange: [0, 180],
+            outputRange: ['0deg', '180deg'],
+          }),
         },
       ],
     };
 
     return (
-      <View style={[styles.container, containerTransform]}>
+      <Animated.View style={[styles.container, containerTransform]}>
         <View
           style={styles.innerContainer}
           {...(timerIsSet ? {} : this.panResponder.panHandlers)}
         >
-          {!timerIsSet &&
+          {pitchTimerWasSetAt === null &&
             waterHeight > 0 &&
-            <Text
-              style={[
-                styles.time,
-                {
-                  bottom: waterHeight,
-                  left:
-                    this.getTimeFromWaterHeight() * (0 - pitch / MAX_MINUTES),
-                },
-              ]}
-            >
+            <Text style={[styles.time, { bottom: waterHeight }]}>
               {this.getTimeFromWaterHeight()}
             </Text>}
-          {timerIsSet &&
+          {pitchTimerWasSetAt !== null &&
             <Text style={[styles.time, { bottom: waterHeight }]}>
-              {this.getTimeFromWaterHeight()}:00
+              {Math.floor(secondsRemaining / 60)}:{secondsRemaining % 60 || '00'}
             </Text>}
           <View style={[styles.water, { height: waterHeight }]} />
           {waterHeight > 0 &&
             <View style={[styles.water, styles.belowWaterExtension]} />}
         </View>
-      </View>
+      </Animated.View>
     );
   }
 }

@@ -2,17 +2,25 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { StyleSheet, View, TouchableOpacity, Text } from 'react-native';
 
-const HourglassTop = ({ onPressReset, timerIsSet }) =>
+const HourglassTop = ({ onPressReset, pitchTimerWasSetAt }) =>
   <View style={styles.container}>
-    {timerIsSet &&
-      <TouchableOpacity onPress={onPressReset} style={styles.btn}>
+    {pitchTimerWasSetAt !== null &&
+      <TouchableOpacity
+        onPress={onPressReset}
+        style={styles.btn}
+        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+      >
         <Text style={styles.btnTxt}>Reset</Text>
       </TouchableOpacity>}
   </View>;
 
 HourglassTop.propTypes = {
   onPressReset: PropTypes.func.isRequired,
-  timerIsSet: PropTypes.bool.isRequired,
+  pitchTimerWasSetAt: PropTypes.number,
+};
+
+HourglassTop.defaultProps = {
+  pitchTimerWasSetAt: null,
 };
 
 const styles = StyleSheet.create({

@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { View, StatusBar } from 'react-native';
+import { Animated, StatusBar } from 'react-native';
 import { decorator as sensors } from 'react-native-sensors';
 import KeepAwake from 'react-native-keep-awake';
 import HourglassBottom from './components/HourglassBottom';
@@ -15,6 +15,8 @@ class App extends React.Component {
   state = {
     pitch: 0,
     timerIsSet: false,
+    rotationAnim: new Animated.Value(0),
+    pitchTimerWasSetAt: null,
   };
 
   componentWillReceiveProps(nextProps) {
@@ -27,15 +29,48 @@ class App extends React.Component {
     pitch = Number((-pitch * 57.295779513).toFixed(1));
 
     const state = { pitch };
-    if (Math.abs(pitch) >= 65) {
+    if (Math.abs(pitch) >= 60) {
       state.timerIsSet = true;
     }
+
     this.setState(state);
+  }
+
+  componentWillUpdate(nextProps, nextState) {
+    const { timerIsSet, pitchTimerWasSetAt } = this.state;
+
+    if (timerIsSet === false && nextState.timerIsSet === true) {
+      // timer was just set
+      Animated.timing(this.state.rotationAnim, {
+        toValue: nextState.pitch < 0 ? -200 : 200,
+        duration: 800,
+      }).start(() =>
+        this.setState({
+          pitchTimerWasSetAt: nextState.pitch,
+        }),
+      );
+    } else if (pitchTimerWasSetAt !== null && nextState.timerIsSet === true) {
+      // timer has been in set state
+      Animated.timing(this.state.rotationAnim, {
+        toValue:
+          pitchTimerWasSetAt < 0
+            ? -180 + nextState.pitch
+            : 180 + nextState.pitch,
+        duration: 150,
+      }).start();
+    } else if (nextState.timerIsSet === false && timerIsSet === true) {
+      // timer was reset
+      Animated.timing(this.state.rotationAnim, {
+        toValue: 0,
+        duration: 200,
+      }).start();
+    }
   }
 
   onPressReset = () => {
     this.setState({
       timerIsSet: false,
+      pitchTimerWasSetAt: null,
     });
   };
 
@@ -45,34 +80,41 @@ class App extends React.Component {
   };
 
   render() {
-    const { pitch, timerIsSet } = this.state;
+    const { pitch, timerIsSet, rotationAnim, pitchTimerWasSetAt } = this.state;
 
     const containerTransform = {
       transform: [
         {
-          rotate: timerIsSet ? `${pitch + 180}deg` : '0deg',
+          rotate: rotationAnim.interpolate({
+            inputRange: [0, 180],
+            outputRange: ['0deg', '180deg'],
+          }),
         },
       ],
     };
 
     return (
-      <View style={[{ flex: 1 }, containerTransform]}>
+      <Animated.View style={[{ flex: 1 }, containerTransform]}>
         <KeepAwake />
         <StatusBar hidden />
         <HourglassTop
           onPressReset={this.onPressReset}
-          timerIsSet={timerIsSet}
+          pitchTimerWasSetAt={pitchTimerWasSetAt}
         />
-        <HourglassBottom pitch={pitch} timerIsSet={timerIsSet} />
+        <HourglassBottom
+          pitch={pitch}
+          timerIsSet={timerIsSet}
+          pitchTimerWasSetAt={pitchTimerWasSetAt}
+        />
 
         {/* this overlay is positioned absolutely
           and doesn't receive touch events */}
         <HourglassOverlay />
-      </View>
+      </Animated.View>
     );
   }
 }
 
 export default sensors({
-  Accelerometer: true,
+  Accelerometer: { updateInterval: 75 },
 })(App);
