@@ -17,6 +17,12 @@ export default class HourglassBottom extends React.Component {
     waterHeight: 0,
   };
 
+  getTimeFromWaterHeight = () => {
+    const { waterHeight } = this.state;
+    const portionFull = waterHeight / CONTAINER_HEIGHT;
+    return Math.round(MAX_MINUTES * Math.pow(portionFull, 2)); // eslint-disable-line
+  };
+
   panResponder = PanResponder.create({
     onStartShouldSetPanResponder: () => true,
     onStartShouldSetPanResponderCapture: () => true,
@@ -42,12 +48,6 @@ export default class HourglassBottom extends React.Component {
       this.setState({ waterHeight: 0, waterInGlass: false }),
     onShouldBlockNativeResponder: () => true,
   });
-
-  getTimeFromWaterHeight = () => {
-    const { waterHeight } = this.state;
-    const portionFull = waterHeight / CONTAINER_HEIGHT;
-    return Math.round(MAX_MINUTES * portionFull ** 2); // eslint-disable-line
-  };
 
   render() {
     const { pitch, timerIsSet } = this.props;
@@ -77,7 +77,8 @@ export default class HourglassBottom extends React.Component {
                 styles.time,
                 {
                   bottom: waterHeight,
-                  left: this.getTimeFromWaterHeight() * -pitch / MAX_MINUTES,
+                  left:
+                    this.getTimeFromWaterHeight() * (0 - pitch / MAX_MINUTES),
                 },
               ]}
             >

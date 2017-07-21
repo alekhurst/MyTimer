@@ -2,10 +2,10 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { View, StatusBar } from 'react-native';
 import { decorator as sensors } from 'react-native-sensors';
+import KeepAwake from 'react-native-keep-awake';
 import HourglassBottom from './components/HourglassBottom';
 import HourglassTop from './components/HourglassTop';
 import HourglassOverlay from './components/HourglassOverlay';
-import KeepAwake from 'react-native-keep-awake';
 
 class App extends React.Component {
   static propTypes = {
@@ -41,7 +41,7 @@ class App extends React.Component {
 
   calculatePitch = accelerometerData => {
     const { x, y, z } = accelerometerData;
-    return Math.atan(x / Math.sqrt(y ** 2 + z ** 2)); // eslint-disable-line
+    return Math.atan(x / Math.sqrt(Math.pow(y, 2) + Math.pow(z, 2))); // eslint-disable-line
   };
 
   render() {

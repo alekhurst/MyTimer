@@ -645,6 +645,7 @@
 					};
 					13B07F861A680F5B00A75B9A = {
 						DevelopmentTeam = R59E649L73;
+						ProvisioningStyle = Manual;
 					};
 					2D02E47A1E0B4A5D006451C7 = {
 						CreatedOnToolsVersion = 8.2.1;
@@ -1141,6 +1142,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
 				CURRENT_PROJECT_VERSION = 1;
 				DEAD_CODE_STRIPPING = NO;
 				DEVELOPMENT_TEAM = R59E649L73;
@@ -1156,7 +1158,10 @@
 					"-ObjC",
 					"-lc++",
 				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.aleklordhurst.MyTimer;
 				PRODUCT_NAME = MyTimer;
+				PROVISIONING_PROFILE = "058d8832-ec7b-41c1-a428-b448423deace";
+				PROVISIONING_PROFILE_SPECIFIER = "MyTimer Distribution";
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Debug;
@@ -1165,6 +1170,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = R59E649L73;
 				HEADER_SEARCH_PATHS = (
@@ -1179,7 +1185,10 @@
 					"-ObjC",
 					"-lc++",
 				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.aleklordhurst.MyTimer;
 				PRODUCT_NAME = MyTimer;
+				PROVISIONING_PROFILE = "058d8832-ec7b-41c1-a428-b448423deace";
+				PROVISIONING_PROFILE_SPECIFIER = "MyTimer Distribution";
 				VERSIONING_SYSTEM = "apple-generic";
 			};
 			name = Release;
