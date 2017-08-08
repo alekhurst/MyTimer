@@ -11,25 +11,27 @@ export default class HourglassBottom extends React.Component {
     timerIsSet: PropTypes.bool.isRequired,
     pitch: PropTypes.number.isRequired,
     pitchTimerWasSetAt: PropTypes.number,
+    startTimer: PropTypes.func.isRequired,
+    secondsRemaining: PropTypes.number,
+    waterHeight: PropTypes.number.isRequired,
+    setWaterHeight: PropTypes.func.isRequired,
   };
 
   static defaultProps = {
     pitchTimerWasSetAt: null,
-  };
-
-  state = {
-    waterInGlass: false,
-    waterHeight: 0,
-    rotationAnim: new Animated.Value(0),
     secondsRemaining: null,
   };
 
+  state = {
+    rotationAnim: new Animated.Value(0),
+  };
+
   componentWillReceiveProps(nextProps) {
-    const { pitch, timerIsSet, pitchTimerWasSetAt } = this.props;
+    const { pitch, timerIsSet, pitchTimerWasSetAt, startTimer } = this.props;
 
     if (pitchTimerWasSetAt === null && nextProps.pitchTimerWasSetAt !== null) {
       // timer setting animation just completed
-      this.startTimer();
+      startTimer(this.getTimeFromWaterHeight() * 60);
     }
 
     if (timerIsSet && nextProps.timerIsSet) {
@@ -39,16 +41,10 @@ export default class HourglassBottom extends React.Component {
 
     if (timerIsSet === false && nextProps.timerIsSet === true) {
       // timer was just set
-      this.setState({ secondsRemaining: this.getTimeFromWaterHeight() * 60 });
       Animated.timing(this.state.rotationAnim, {
         toValue: pitch < 0 ? -180 : 180,
         duration: 800,
       }).start();
-    } else if (timerIsSet === true && nextProps.timerIsSet === false) {
-      // timer was reset
-      console.log('timer reste');
-      this.setState({ secondsRemaining: null });
-      clearInterval(this.timerInterval);
     } else if (timerIsSet === false) {
       // timer not set
       Animated.timing(this.state.rotationAnim, {
@@ -59,7 +55,7 @@ export default class HourglassBottom extends React.Component {
   }
 
   getTimeFromWaterHeight = () => {
-    const { waterHeight } = this.state;
+    const { waterHeight } = this.props;
     const portionFull = waterHeight / CONTAINER_HEIGHT;
     return Math.round(MAX_MINUTES * Math.pow(portionFull, 2)); // eslint-disable-line
   };
@@ -71,7 +67,7 @@ export default class HourglassBottom extends React.Component {
     onMoveShouldSetPanResponderCapture: () => true,
     onPanResponderGrant: (evt, { y0 }) => {
       const waterHeight = vh(100) - y0;
-      this.setState({ waterHeight, waterInGlass: false });
+      this.setState({ waterHeight });
     },
     onPanResponderMove: (evt, { y0, dy }) => {
       const waterHeight = vh(100) - (y0 + dy);
@@ -81,26 +77,22 @@ export default class HourglassBottom extends React.Component {
         return;
       }
 
-      this.setState({ waterHeight });
+      this.props.setWaterHeight(waterHeight);
     },
     onPanResponderTerminationRequest: () => true,
-    onPanResponderRelease: () => this.setState({ waterInGlass: true }),
-    onPanResponderTerminate: () =>
-      this.setState({ waterHeight: 0, waterInGlass: false }),
+    onPanResponderRelease: () => true,
+    onPanResponderTerminate: () => this.setState({ waterHeight: 0 }),
     onShouldBlockNativeResponder: () => true,
   });
 
-  startTimer = () => {
-    this.timerInterval = setInterval(() => {
-      this.setState(state => ({
-        secondsRemaining: state.secondsRemaining - 1,
-      }));
-    }, 1000);
-  };
-
   render() {
-    const { timerIsSet, pitchTimerWasSetAt } = this.props;
-    const { waterHeight, rotationAnim, secondsRemaining } = this.state;
+    const {
+      timerIsSet,
+      pitchTimerWasSetAt,
+      secondsRemaining,
+      waterHeight,
+    } = this.props;
+    const { rotationAnim } = this.state;
 
     const containerTransform = {
       transform: [
@@ -130,6 +122,7 @@ export default class HourglassBottom extends React.Component {
             </Text>}
           <View style={[styles.water, { height: waterHeight }]} />
           {waterHeight > 0 &&
+            pitchTimerWasSetAt === null &&
             <View style={[styles.water, styles.belowWaterExtension]} />}
         </View>
       </Animated.View>
@@ -141,8 +134,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignSelf: 'stretch',
-    zIndex: 0,
+    backgroundColor: 'white',
     justifyContent: 'flex-end',
+    zIndex: 100,
   },
   innerContainer: {
     height: CONTAINER_HEIGHT,

@@ -6,6 +6,7 @@ import KeepAwake from 'react-native-keep-awake';
 import HourglassBottom from './components/HourglassBottom';
 import HourglassTop from './components/HourglassTop';
 import HourglassOverlay from './components/HourglassOverlay';
+import DripOverlay from './components/DripOverlay';
 
 class App extends React.Component {
   static propTypes = {
@@ -15,11 +16,17 @@ class App extends React.Component {
   state = {
     pitch: 0,
     timerIsSet: false,
-    rotationAnim: new Animated.Value(0),
+    bottomWaterHeight: 0,
+    // the difference between this and timerIsSet, is timerIsSet is set to true
+    // after the set animation has completed
     pitchTimerWasSetAt: null,
+    numSecsTimerWasSetAt: null,
+    rotationAnim: new Animated.Value(0),
+    secondsRemaining: null,
   };
 
   componentWillReceiveProps(nextProps) {
+    const { bottomWaterHeight } = this.state;
     if (!nextProps.Accelerometer) {
       // Accelerometer not yet initialized
       return;
@@ -28,12 +35,12 @@ class App extends React.Component {
     let pitch = this.calculatePitch(nextProps.Accelerometer);
     pitch = Number((-pitch * 57.295779513).toFixed(1));
 
-    const state = { pitch };
-    if (Math.abs(pitch) >= 60) {
-      state.timerIsSet = true;
+    const nextStateObj = { pitch };
+    if (Math.abs(pitch) >= 60 && bottomWaterHeight > 0) {
+      nextStateObj.timerIsSet = true;
     }
 
-    this.setState(state);
+    this.setState(nextStateObj);
   }
 
   componentWillUpdate(nextProps, nextState) {
@@ -42,8 +49,8 @@ class App extends React.Component {
     if (timerIsSet === false && nextState.timerIsSet === true) {
       // timer was just set
       Animated.timing(this.state.rotationAnim, {
-        toValue: nextState.pitch < 0 ? -200 : 200,
-        duration: 800,
+        toValue: nextState.pitch < 0 ? 140 : -140,
+        duration: 700,
       }).start(() =>
         this.setState({
           pitchTimerWasSetAt: nextState.pitch,
@@ -54,24 +61,40 @@ class App extends React.Component {
       Animated.timing(this.state.rotationAnim, {
         toValue:
           pitchTimerWasSetAt < 0
-            ? -180 + nextState.pitch
-            : 180 + nextState.pitch,
+            ? 180 + nextState.pitch
+            : -180 + nextState.pitch,
         duration: 150,
       }).start();
     } else if (nextState.timerIsSet === false && timerIsSet === true) {
       // timer was reset
       Animated.timing(this.state.rotationAnim, {
         toValue: 0,
-        duration: 200,
+        duration: 400,
       }).start();
     }
   }
 
-  onPressReset = () => {
+  resetTimer = () => {
     this.setState({
       timerIsSet: false,
       pitchTimerWasSetAt: null,
+      secondsRemaining: null,
+      numSecsTimerWasSetAt: null,
     });
+    clearInterval(this.timerInterval);
+  };
+
+  startTimer = totalSeconds => {
+    this.setState({
+      secondsRemaining: totalSeconds,
+      numSecsTimerWasSetAt: totalSeconds,
+    });
+
+    this.timerInterval = setInterval(() => {
+      this.setState(state => ({
+        secondsRemaining: state.secondsRemaining - 1,
+      }));
+    }, 1000);
   };
 
   calculatePitch = accelerometerData => {
@@ -80,7 +103,15 @@ class App extends React.Component {
   };
 
   render() {
-    const { pitch, timerIsSet, rotationAnim, pitchTimerWasSetAt } = this.state;
+    const {
+      pitch,
+      timerIsSet,
+      rotationAnim,
+      pitchTimerWasSetAt,
+      secondsRemaining,
+      numSecsTimerWasSetAt,
+      bottomWaterHeight,
+    } = this.state;
 
     const containerTransform = {
       transform: [
@@ -98,18 +129,26 @@ class App extends React.Component {
         <KeepAwake />
         <StatusBar hidden />
         <HourglassTop
-          onPressReset={this.onPressReset}
+          resetTimer={this.resetTimer}
+          secondsRemaining={secondsRemaining}
           pitchTimerWasSetAt={pitchTimerWasSetAt}
+          numSecsTimerWasSetAt={numSecsTimerWasSetAt}
         />
         <HourglassBottom
           pitch={pitch}
           timerIsSet={timerIsSet}
           pitchTimerWasSetAt={pitchTimerWasSetAt}
+          startTimer={this.startTimer}
+          secondsRemaining={secondsRemaining}
+          waterHeight={bottomWaterHeight}
+          setWaterHeight={nextHeight =>
+            this.setState({ bottomWaterHeight: nextHeight })}
         />
 
         {/* this overlay is positioned absolutely
           and doesn't receive touch events */}
         <HourglassOverlay />
+        {timerIsSet && <DripOverlay pitch={pitch} />}
       </Animated.View>
     );
   }

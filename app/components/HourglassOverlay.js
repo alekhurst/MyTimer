@@ -41,7 +41,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     flexDirection: 'row',
     flex: 1,
-    zIndex: 10000,
+    zIndex: 1000,
   },
   sideContainer: {
     flex: 1,
